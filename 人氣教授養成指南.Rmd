@@ -15,7 +15,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, out.width="50%", fig.width=12, fig.height=8)
+knitr::opts_chunk$set(echo = TRUE, out.width="100%", fig.width=12, fig.height=8)
 ```
 
 ```{r packages, include = FALSE}
@@ -42,9 +42,7 @@ font_add("STHeiti", "STHeiti Medium.ttc")
 本組專案的流程包括網路爬蟲、量化分析、語意分析三項，各項流程的執行方式如下：
 
 1. 網路爬蟲：使用 Python 爬取 UrSchool 臺大教授的個人推薦指數、 同學 評價等資料， 並存成 Excel 檔。
-
 2. 量化分析：使用 R 語言分析每位教授的推薦指數與所屬系所、 口條、 課業 壓力、 給分甜度等因素的關係。
-
 3. 語意分析：使用 R 語言分析同學給教授的評價留言，分析個人推薦指數高、 低的教授留言內容的差異。
 
 ## 資料簡介
@@ -200,13 +198,11 @@ show_clean_data <- kable(data[1:3, c(1:13, 15:16)], align="ccccccccccccccc") %>%
 本組進行的前處理如下：
 
 1. 等第制資料轉換：在資料的平均成績欄位為字串形式，我們將各等地轉換為百分制。
-
 2. 授課系所統一、職稱統一：經過我們研究發現，由於UrSchool的教授名單是任何人都能添加與更新，因此資料的授課系所、職稱有各種不同的名稱，而在此我們為了方便分析而將相同意義的名稱進行整理。
-
 3. 增加學院欄位：增加各個教授的授課學院。
-
 4. 除去重複資料：有部分教授名單重複等情形，因此我們將重複的教授自資料中剔除。
 前處理過後的資料如下
+
 ```{r 印出前處理後資料}
 show_clean_data
 ```
@@ -249,37 +245,12 @@ depart_score_analysis <- kable(department_average, align = 'cccccc') %>%
 depart_score_analysis
 ```
 
-```{r 盒鬚圖(有點怪所以先隱藏), include=FALSE}
-ggplot(by_department, aes(x = 學院, y = 私心推薦)) + 
-  geom_boxplot() +
-  labs(title = "各學院私心推薦", x="學院") + 
-  ylim(0, 5) + 
-  coord_flip()
+由上表我們可以發現以下幾項資訊：
 
-ggplot(by_department, aes(x = 學院, y = 學到東西)) + 
-  geom_boxplot() + 
-  labs(title = "各學院學到東西", x="學院") + 
-  ylim(0, 5) + 
-  coord_flip()
-
-ggplot(by_department, aes(x = 學院, y = 口條好)) + 
-  geom_boxplot()+ 
-  labs(title = "各學院口條好", x="學院") + 
-  ylim(0, 5) + 
-  coord_flip()
-
-ggplot(by_department, aes(x = 學院, y = 課業壓力)) + 
-  geom_boxplot() +
-  labs(title = "各學院課業壓力", x="學院") + 
-  ylim(0, 5) + 
-  coord_flip()
-
-ggplot(by_department, aes(x = 學院, y = 給分甜度)) + 
-  geom_boxplot() + 
-  labs(title = "各學院給分甜度", x="學院") + 
-  ylim(0, 5) + 
-  coord_flip()
-```
+1. 文學院的資料筆數最多，可能是因為資料中有許多大學國文的老師及教授外語的老師。
+2. 法律學院在平均私心推薦、學到東西、口條、給分甜度分數都是所有學院最高的。可能代表法律學院教授在各項指標較獲得學生喜愛，或除了教授給分比較甜外，評分的學生給分也比較甜。
+3. 生農學院、生命科學院在平均私心推薦、學到東西、口條、給分甜度分數都是偏低的，皆未超過4分。
+4. 平均課業壓力以電資學院、法學院最高，而社會科學院最低。
 
 ## 各項指標與私心推薦指數的相關性
 分析完各個系所各項指標的差異之後，接下來分析各項指標之間的相關性。如下圖，可發現同學私人推薦指數與是否學習到東西及教授的口條如何呈現高度正相關，其次為給分甜度，而相較之下課業壓力與私心推薦指數的相關性最低。
@@ -322,19 +293,27 @@ predict_result <- ggplot(score, aes(x = 私心推薦, y = 預估私心推薦)) +
 ```{r}
 predict_result
 ```
+
 ## 其他可能影響私心推薦指數的指標
 除了原始資料已經有的數量資訊外，我們針對基本資料中的其他文字欄位進行分析，判斷是否與私心推薦指數有關聯。
 
 ### 土博士 v.s. 洋墨水
-文字說明
-```{r}
+是否留學海外的教授可以在私心推薦分數上擁有較好的表現？以下我們透過檢查資料的「最高學歷」項目，將最高學歷於國內學校穫得者歸類為「本土學歷」，反之則歸類為「外國學歷」。完成歸類後，檢視私心推薦分數表現與之是否有關聯。
+然而由於網路資料在「最高學歷」項目的名稱上相當多元，透過以下篩選將有部分誤差。
+本部分結論有二：
 
+1. 依照此歸類資料，外國學歷資料數多於本土學歷（可能包含未被篩選出的本土學歷），因此即使高分群以擁有外國學歷的教授佔多數，也不一定代表兩個項目有因果關係或相關性。
+2. 不論在本土學歷或是外國學歷項目中，私心推薦分數獲得5分的教授皆為最多，或許意味著兩者相關性並不強。
+```{r}
+#列出辨識出本土學歷的關鍵字，由於部分學校的名稱可能誤將某些外國學校篩掉，關鍵字並未包含所有學校名稱
 ```
 
 ### 教授有綽號是否代表與學生比較喜歡？
-文字說明
-```{r}
+以下驗證有無綽號與私心推薦分數表現的關聯性，發現雖然有綽號的教授僅佔約2%，但觀察有綽號的教授在各分數階層的分布時可以發現，
+大部分有綽號的教授在私心推薦分數的表現上都相當好，光是得分在4分以上者就佔了多數。推測可能因為教授較受學生歡迎才會獲得綽號。
 
+```{r}
+#以私心推薦分數為x軸繪製直方圖，觀察有綽號的教授在各分數的佔比
 ```
 
 # 語意分析
@@ -372,7 +351,7 @@ get_segged_text <- function(x){
   tidy_text_format <- comment_df %>%
     unnest_tokens(output = "word", input = "content",
                 token = "regex", pattern = " ")
-  # 抓出前 30 個最常出現的形容詞
+  # 抓出前 20 個最常出現的形容詞
   text_final <- tidy_text_format %>%
     group_by(word) %>%
     summarise(n = n()) %>%
@@ -389,6 +368,7 @@ important_personality <- highchart() %>%
   hc_xAxis(categories = total_text$word) %>%
   hc_add_series(name = "出現次數", 
                data = total_text$n) %>%
+  hc_size(height = 550, width = 800) %>%
   hc_title(text = "評論中最常出現的詞彙 Top 30")
 ```
 
@@ -433,22 +413,24 @@ low_review <- data %>%
   filter(!is.na(評論), 私心推薦 <= 3) %>% 
   select(評論)
 
-high_review_text <- get_segged_text(high_review)
-low_review_text <- get_segged_text(low_review)
+high_review_text <- get_segged_text(high_review) %>% top_n(20)
+low_review_text <- get_segged_text(low_review) %>% top_n(20)
 
 important_personality_high_score <- highchart() %>% 
   hc_chart(type = "bar") %>%
   hc_xAxis(categories = high_review_text$word) %>%
   hc_add_series(name = "出現次數", 
                 data = high_review_text$n) %>%
-  hc_title(text = "高評價教授詞彙分佈圖評論中最常出現的詞彙 Top 30") 
+  hc_size(height = 550, width = 800) %>%
+  hc_title(text = "高評價教授詞彙分佈圖評論中最常出現的詞彙") 
   
 important_personality_low_score <- highchart() %>% 
   hc_chart(type = "bar") %>%
   hc_xAxis(categories = low_review_text$word) %>%
   hc_add_series(name = "出現次數", 
                 data = low_review_text$n) %>%
-  hc_title(text = "低評價教授詞彙分佈圖評論中最常出現的詞彙 Top 30")
+  hc_size(height = 550, width = 800) %>%
+  hc_title(text = "低評價教授詞彙分佈圖評論中最常出現的詞彙")
 ```
 
 ``` {r}
