@@ -15,7 +15,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, out.width="100%", fig.width=12, fig.height=8)
+knitr::opts_chunk$set(echo = TRUE, out.width="100%")
 ```
 
 ```{r packages, include = FALSE}
@@ -37,7 +37,23 @@ font_add("STHeiti", "STHeiti Medium.ttc")
 
 # 專案背景與資料簡介
 ## 專案背景
-誰來寫個？
+還記得幾年前剛升上大學，拿到一張空白的課表，人生第一次要由自己來填上。焦急地查閱各種網路文章、評論留言、評價分數......一位位素昧平生的教授就這樣被化成一項項量化的分數，我們或多或少參考了這些分數，默默地過完了好一段大學歲月。
+
+想想自己有沒有可能因此而與某些知識領域擦身而過，或是不小心「誤入歧途」，得要逼自己習慣不適合自己的授課方式？
+
+從這個身為大學生揮之不去的煩惱出發，我們想知道這些對於教授、課堂的評論與分數到底是怎麼一回事。為此我們選了**「Urschool大學科系教授評價網」**作為研究對象，目標是找到一系列對於教授的評分與文字評價當中的端倪。
+
+21世紀是個「線上時代」，每個人都是一個巨量數據的集合。
+
+不論大至攸關國家社稷，小至謹謹生活瑣事，當我們面對一個陌生的問題時，第一個反應往往是上網查資料。
+然而透過區區幾十吋的電腦螢幕，我們能在瞬間獲得千百筆資料，新聞媒體、社群平台、電商官網......承載資料的網站五花八門，而在其間四處流竄的資料更是琳瑯滿目，在資料科學與視覺化技術的加持下，在我們眼前以各種形式呈現。
+
+>The world you see is not real, let alone what others want you to see.
+>
+>  S.J Watson,《別相信任何人》
+
+
+這個時代的我們就像住在一個名為「網際網路」的城市，到處閃爍著霓虹，一個不留神方向就錯了。我們需要的是一個「良好的方向感」，一個有效率獲取資訊，並正確處理和分析的素養。因此在本專案中，本組選擇了一個與身為學生的我們習習相關的主題來進行自我訓練。
 
 ## 專案流程
 本組專案的流程包括網路爬蟲、量化分析、語意分析三項，各項流程的執行方式如下：
@@ -49,6 +65,7 @@ font_add("STHeiti", "STHeiti Medium.ttc")
 ## 資料簡介
 ### 讀入資料
 在這次的專案裡，我們使用Python的BeautifulSoup、Selenium等套件爬取 [UrSchool](https://urschool.org/ntu/list) 的臺大教授評價資料，包括同學對每位教授的評分與同學在教授底下的留言，並儲存成Excel檔，再使用R語言進行更進階的操作。
+
 ```{r 讀入資料與呈現 ,include=FALSE}
 raw_data <- read_excel('UrSchool教授資料.xlsx')
 show_raw_data <- kable(raw_data[1:3, 1:13], align="ccccccccccccc") %>%
@@ -261,7 +278,7 @@ scores <- data %>%
   select(私心推薦, 學到東西, 口條好, 課業壓力, 給分甜度)
 ```
 
-```{r 各項指標相關係數}
+```{r 各項指標相關係數, fig.width = 10, fig.height = 10}
 scores %>% 
   pairs.panels(lm = T, smooth = F, ellipses = F, rug = F, hist.col = "#00b4d8", cex.labels=3, cex.axis=2)
 ```
@@ -291,7 +308,7 @@ predict_result <- ggplot(score, aes(x = 私心推薦, y = 預估私心推薦)) +
   geom_abline(intercept = 0, slope = 1, color = "#90e0ef")
 ```
 
-```{r}
+```{r, fig.width = 10, fig.height = 10}
 predict_result
 ```
 
@@ -305,16 +322,73 @@ predict_result
 
 1. 依照此歸類資料，外國學歷資料數多於本土學歷（可能包含未被篩選出的本土學歷），因此即使高分群以擁有外國學歷的教授佔多數，也不一定代表兩個項目有因果關係或相關性。
 2. 不論在本土學歷或是外國學歷項目中，私心推薦分數獲得5分的教授皆為最多，或許意味著兩者相關性並不強。
-```{r}
+
+```{r 土博士 v.s. 洋墨水, include=FALSE}
 #列出辨識出本土學歷的關鍵字，由於部分學校的名稱可能誤將某些外國學校篩掉，關鍵字並未包含所有學校名稱
+type <- c(1:3150)
+TW <- list("臺","台","清",c("交","通"),c("成","功"),c("師","範"),c("中","興"),c("中","央"),c("中","山"),c("海","洋"),c("中","正"),c("高","雄"), c("彰","化"),c("陽","明"),c("嘉","義"),c("東","華"),c("雲","林"),c("屏","東"),c("宜","蘭"),c("虎","尾"),c("澎","湖"),c("勤","益"),c("金","門"),c("輔","仁"),c("淡","江"),c("逢","甲"),c("慈","濟")
+        )
+
+tw <- c("Taiwan","tawain","NTU","ntu", "taiwan")
+
+#使用上述關鍵字list歸類出是否是否為本土學歷
+for (x in seq_along(data$最高學歷)){
+  if (any(letters %in% strsplit(data$最高學歷[x],""))){
+  W1 <- strsplit(data$最高學歷[x]," ")
+  check1 <- w1[[1]]
+  for ( y in seq_along(tw)){
+    if (any(tw[y] %in% check1)) {type[x] <- "本土學歷"}
+  }
+  } else{
+  w2 <- strsplit(data$最高學歷[x],"")
+  check2 <- w2[[1]]
+  for ( y in seq_along(TW)){
+    if (any(TW[[y]] %in% check2)) {type[x] <- "本土學歷"}
+  }
+  }
+   if (type[x] != "本土學歷") {type[x] <- data$最高學歷[x]}
+}
+
+type[type != "本土學歷"] <- "外國學歷"
+data_with_type <- data %>%
+  mutate ("博士學位取得地" = type) %>%
+  filter(!is.na(博士學位取得地),!is.na(私心推薦))
+
+"私心推薦分數"<- as.character(data_with_type$私心推薦)
+
+#圖表：不論是擁有本土學歷還是外國學歷的教授，私心推薦分數獲得5分者皆為最多
+phd_place <- ggplot(data = data_with_type) +
+  geom_bar(aes(x = 博士學位取得地, fill = 私心推薦分數) , position = "fill") +
+  scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1) ,labels =c("0%","10%","20%","30%","40%", "50%", "60%", "70%", "80%", "90%", "100%")) + 
+  coord_flip() + 
+  scale_fill_manual(values=c("#E9503F", "#E5786E", "#E19F9D", "#DDC7CC", "#D9EEFA", "#BEDDF2", "#6DA7D8", "#1C71BE", "#005FB5"))
+```
+
+``` {r, fig.width = 10, fig.height = 4}
+phd_place
 ```
 
 ### 教授有綽號是否代表與學生比較喜歡？
 以下驗證有無綽號與私心推薦分數表現的關聯性，發現雖然有綽號的教授僅佔約2%，但觀察有綽號的教授在各分數階層的分布時可以發現，
 大部分有綽號的教授在私心推薦分數的表現上都相當好，光是得分在4分以上者就佔了多數。推測可能因為教授較受學生歡迎才會獲得綽號。
 
-```{r}
-#以私心推薦分數為x軸繪製直方圖，觀察有綽號的教授在各分數的佔比
+```{r 教授有綽號是否代表與學生比較喜歡, include=FALSE}
+#以私心推薦分數為x軸繪製直方圖，觀察有綽號的教授在各分數的佔比，然而有綽號的教授在所有教授中佔比偏低，無法直接比較
+nickname_data  <- data %>%
+  filter(!is.na(data$私心推薦)) %>%
+  mutate(是否有綽號 = if_else(is.na(綽號), "沒有綽號", "有綽號"))
+
+"私心推薦分數"<- as.character(nickname_data$私心推薦)
+
+nickname <- ggplot(data = nickname_data) +
+  geom_bar(aes(x = 是否有綽號, fill = 私心推薦分數) , position = "fill") +
+  scale_y_continuous(breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1) ,labels =c("0%","10%","20%","30%","40%", "50%", "60%", "70%", "80%", "90%", "100%")) +
+  coord_flip() +
+  scale_fill_manual(values=c("#E9503F", "#E5786E", "#E19F9D", "#DDC7CC", "#D9EEFA", "#BEDDF2", "#6DA7D8", "#1C71BE", "#005FB5"))
+```
+
+```{r, fig.width = 10, fig.height = 4}
+nickname
 ```
 
 # 語意分析
@@ -364,7 +438,7 @@ get_segged_text <- function(x, num_){
 
 total_text <- get_segged_text(comment,30)
 draw_word <- get_segged_text(comment, 100)
-wordcloud <- draw_word %>% wordcloud2(color ="random-dark")
+wordcloud <- draw_word %>% wordcloud2(fontFamily = "STHeiti")
 
 important_personality <- highchart() %>% 
   hc_size(height = 600, width = 800) %>%
@@ -379,7 +453,7 @@ important_personality <- highchart() %>%
 important_personality
 ```
 
-```{r}
+```{r, fig.width = 10, fig.height = 10, dpi = 100}
 wordcloud
 ```
 
@@ -420,7 +494,7 @@ low_review <- data %>%
   filter(!is.na(評論), 私心推薦 <= 3) %>% 
   select(評論)
 
-high_review_text <- get_segged_text(high_review,30)
+high_review_text <- get_segged_text(high_review, 30)
 low_review_text <- get_segged_text(low_review, 29)
 
 important_personality_high_score <- highchart() %>% 
@@ -429,7 +503,7 @@ important_personality_high_score <- highchart() %>%
   hc_xAxis(categories = high_review_text$word) %>%
   hc_add_series(name = "出現次數", 
                 data = high_review_text$n) %>%
-  hc_title(text = "高評價教授詞彙分佈圖評論中最常出現的詞彙 Top 30") 
+  hc_title(text = "高評價教授評價最常出現的詞彙 Top 30") 
   
 important_personality_low_score <- highchart() %>% 
   hc_size(height = 600, width = 800) %>%
@@ -437,7 +511,7 @@ important_personality_low_score <- highchart() %>%
   hc_xAxis(categories = low_review_text$word) %>%
   hc_add_series(name = "出現次數", 
                 data = low_review_text$n) %>%
-  hc_title(text = "低評價教授詞彙分佈圖評論中最常出現的詞彙 Top 30")
+  hc_title(text = "低評價教授評價最常出現的詞彙 Top 30")
 ```
 
 ``` {r}
@@ -449,4 +523,13 @@ important_personality_low_score
 ```
 
 # 總結
-綜合上述分析，我們判斷學生會較推薦有以下特質的教授：
+綜合上述分析，我們判斷學生選課時可使用以下兩個項目來進行決策：
+
+1. 各項指標分數
+2. 評論內容
+
+首先，各項指標分數的部分，可以先從**私心推薦分數**對於教授和課堂獲得最粗略的認識，接著再以**學到東西**、**口條好**、**給分甜度**來判斷較細節的部分。至於**課業壓力分數**則是見仁見智，對推薦指數沒有什麼影響。
+
+其次，**評論**的部分可以參考留言者的用詞。我們發現私心推薦指數高的教授，相關的評論幾乎都是正面的評價，沒有負面的字眼；但私心推薦指數低的教授，相關的評論雖然還是會出現正面評價，但負面字眼出現的頻率也不低。
+
+最終結論：**選課時，可先從各項分數了解大致的情況，再參考同學的評論，來判斷該教授的教學情況。**
